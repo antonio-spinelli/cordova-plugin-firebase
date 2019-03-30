@@ -146,13 +146,19 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                     .setPriority(NotificationCompat.PRIORITY_MAX);
 
             String subText = data.get("subText");
-            if (subText != null) {
+            if (subText != null && !TextUtils.isEmpty(subText)) {
                 notificationBuilder.setSubText(subText);
             }
 
             String largeIcon = data.get("largeIcon");
-            if (largeIcon != null) {
+            if (largeIcon != null && !TextUtils.isEmpty(largeIcon)) {
                 notificationBuilder.setLargeIcon(getBitmapFromURL(largeIcon));
+            }
+
+            String bigPicture = data.get("bigPicture");
+            if (bigPicture != null && !TextUtils.isEmpty(bigPicture)) {
+                notificationBuilder.setStyle(new NotificationCompat.BigPictureStyle()
+                    .bigPicture(getBitmapFromURL(bigPicture)));
             }
 
             int resID = getResources().getIdentifier("notification_icon", "drawable", getPackageName());
