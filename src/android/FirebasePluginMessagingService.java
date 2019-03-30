@@ -14,10 +14,16 @@ import android.app.Notification;
 import android.text.TextUtils;
 import android.content.ContentResolver;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.net.URL;
+import java.net.HttpURLConnection;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -144,6 +150,11 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                 notificationBuilder.setSubText(subText);
             }
 
+            String largeIcon = data.get("largeIcon");
+            if (largeIcon != null) {
+                notificationBuilder.setLargeIcon(getBitmapFromURL(largeIcon));
+            }
+
             int resID = getResources().getIdentifier("notification_icon", "drawable", getPackageName());
             if (resID != 0) {
                 notificationBuilder.setSmallIcon(resID);
@@ -217,6 +228,21 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
         } else {
             bundle.putBoolean("tap", false);
             FirebasePlugin.sendNotification(bundle, this.getApplicationContext());
+        }
+    }
+
+    private static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
         }
     }
 }
