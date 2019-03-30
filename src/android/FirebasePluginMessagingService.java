@@ -113,6 +113,8 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
     private void sendNotification(String id, String title, String messageBody, Map<String, String> data, boolean showNotification, String sound, String lights) {
         Bundle bundle = new Bundle();
+        bundle.putString("title", title);
+        bundle.putString("body", messageBody);
         for (String key : data.keySet()) {
             bundle.putString(key, data.get(key));
         }
@@ -214,8 +216,6 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             notificationManager.notify(id.hashCode(), notification);
         } else {
             bundle.putBoolean("tap", false);
-            bundle.putString("title", title);
-            bundle.putString("body", messageBody);
             FirebasePlugin.sendNotification(bundle, this.getApplicationContext());
         }
     }
