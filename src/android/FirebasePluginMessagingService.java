@@ -22,11 +22,19 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 
 public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
@@ -86,6 +94,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             text = remoteMessage.getNotification().getBody();
             id = remoteMessage.getMessageId();
         } else if (data != null) {
+            this.storeMessage(data);
             title = data.get("title");
             text = data.get("text");
             id = data.get("id");
@@ -250,5 +259,60 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             // Log exception
             return null;
         }
+    }
+
+    private void storeMessage(Map<String,String> messageData) {
+      try {
+        JSONObject newMessage = new JSONObject(messageData);
+        newMessage.put("tap", false);
+        newMessage.put("toRead", true);
+
+        JSONArray messages = this.getMessages();
+        messages.put(newMessage);
+
+        this.updateLocalMessages(messages);
+      } catch (JSONException e) {
+          e.printStackTrace();
+          Log.d(TAG, "storeMessage: " + e.toString());
+      }
+    }
+
+    private JSONArray getMessages() throws JSONException {
+        String fileContent = "[]";
+        String filename = "messages.json";
+        try {
+            Context context = this.getApplicationContext();
+            File file = new File(context.getFilesDir(), filename);
+            byte[] bytesArray = new byte[(int) file.length()];
+            FileInputStream fis = new FileInputStream(file);
+            fis.read(bytesArray);
+            fis.close();
+            fileContent = new String(bytesArray);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Message file content: " + e.toString());
+            this.initLocalMessages();
+        }
+        return new JSONArray(fileContent);
+    }
+
+    private void initLocalMessages() {
+      this.updateLocalMessages(new JSONArray());
+    }
+
+    private void updateLocalMessages(JSONArray messages) {
+      Context context = this.getApplicationContext();
+      String filename = "messages.json";
+      File file = new File(context.getFilesDir(), filename);
+      String fileContents = messages.toString();
+      FileOutputStream outputStream;
+      try {
+          outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+          outputStream.write(fileContents.getBytes());
+          outputStream.close();
+      } catch (Exception e) {
+          e.printStackTrace();
+          Log.d(TAG, "Message Store: " + e.toString());
+      }
     }
 }
